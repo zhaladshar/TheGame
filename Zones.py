@@ -1,6 +1,6 @@
 import random
 
-import Requirements
+import UniversalClasses
 import constants
 
 class ActionDict(dict):
@@ -15,9 +15,10 @@ class ActionDict(dict):
         return actionList
     
 class Action:
-    def __init__(self, description, mainAction):
+    def __init__(self, description, mainActionFg, performanceCount):
         self.description = description
-        self.mainAction = mainAction
+        self.mainAction = mainActionFg
+        self.performanceCount = performanceCount
         self.results = []
         self.failedResult = None
         self.requirements = []
@@ -35,6 +36,13 @@ class Action:
     def addAttributeImproved(self, attributeImproved):
         self.attributesImproved.append(attributeImproved)
 
+    def requirementsMet(self):
+        met = True
+        for req in self.requirements:
+            if req.isRequirementMet() == False:
+                met = False
+        return met
+    
     def getResult(self):
         randomNum = random.uniform(0, 1)
         interval = 0.0
@@ -57,16 +65,24 @@ class Action:
             return self.failedResult
         else:
             return self.results[result]
+
+    def incrementCount(self):
+        self.performanceCount += 1
         
 class Result:
-    def __init__(self, description, likelihood, maxLikelihood):
+    def __init__(self, description, likelihood, maxLikelihood, message):
         self.description = description
         self.likelihood = likelihood
         self.maxLikelihood = maxLikelihood
         self.actions = []
+        self.message = message
+        self.executionScript = []
 
     def addAction(self, action):
         self.actions.append(action)
+
+    def addExecutionScript(self, executionScript):
+        self.executionScript.append(executionScript)
 
 class Zone:
     def __init__(self, name, level, exp, unlocked):
@@ -88,56 +104,26 @@ class Zone:
         self.results[result.description] = result
 
     def act(self, actionToExecuteText):
+        self.actions[actionToExecuteText].incrementCount()
         self.lastResult = self.actions[actionToExecuteText].getResult()
 
-if __name__ == "__main__":
-    random.seed()
-    
-    forest = Zone("Forest", 1, 0)
-    
-    wander = Action("Wander")
-    forage = Action("Forage")
-    climb = Action("Climb")
-    chop = Action("Chop")
-    makeTown = Action("Make a town")
-    drink = Action("Drink")
-    soakFeet = Action("Soak Feet")
-    lookAtOneself = Action("Look at yourself")
-    pray = Action("Pray")
-    follow = Action("Follow")
-    trap = Action("Trap")
+    def generateItemDrop(self, actionExecutedText, dbCursor):
+        dbCursor.execute("""SELECT ZonesItemDrop.ItemIdNum, Items.Name
+                            FROM ZonesItemDrop
+                            JOIN Items ON ZonesItemDrop.ItemIdNum = Items.ItemId
+                            WHERE Zone=? AND Action=?""",
+                         (self.name, actionExecutedText))
+        dropList = []
+        for item in dbCursor:
+            dropList.append((item[0], item[1]))
 
-    wander_res1 = Result("Found a tree", .10, .25)
-    wander_res2 = Result("Found a clearing", 0.005, 0.005)
-    wander_res3 = Result("Found a stream", .07, .15)
-    wander_res4 = Result("Found a shrine", .025, .05)
-    wander_resfail = Result("Found nothing exciting", 1, 1)
-    forage_res1 = Result("Found food/item", .15, .15)
-    forage_res2 = Result("Found tracks", .01, .01)
-    forage_resfail = Result("Found nothing", 1, 1)
-    follow_res1 = Result("Found an animal", .2, .2)
-    climb_res1 = Result("Found food/item", .1, .1)
-    lookAtOneself_res1 = Result("Found a coin", .2, .2)
+        randomNum = random.randint(0, len(dropList) - 1)
+        randomQty = random.randint(1, 4)
 
-    wander.addResult(wander_res1)
-    wander.addResult(wander_res2)
-    wander.addResult(wander_res3)
-    wander.addResult(wander_res4)
-    wander.addFailedResult(wander_resfail)
-    forage.addResult(forage_res1)
-    forage.addResult(forage_res2)
-    forage.addFailedResult(forage_resfail)
-    follow.addResult(follow_res1)
-    climb.addResult(climb_res1)
-    lookAtOneself.addResult(lookAtOneself_res1)
-    
-    forest.addAction(wander)
-    forest.addAction(forage)
-    wander_res1.addAction(climb)
-    wander_res1.addAction(chop)
-    wander_res2.addAction(makeTown)
-    wander_res3.addAction(drink)
-    wander_res3.addAction(soakFeet)
-    wander_res3.addAction(lookAtOneself)
-    wander_res4.addAction(pray)
-    follow_res1.addAction(trap)
+        return (randomQty, dropList[randomNum])
+
+    def generateAnimal(self, actionExecutedText, dbCursor):
+        dbCursor.execute("""SELECT """)
+
+    def generateCoinDrop(self):
+        return random.randint(self.level, 5 * self.level)

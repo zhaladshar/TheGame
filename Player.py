@@ -20,13 +20,22 @@ class Attribute:
     def levelUp(self):
         self.value += 1
         self.exp -= self.expToLevelUp()
-        
+
+class Inventory(dict):
+    def __init__(self):
+        super().__init__()
+
+    def addItemToInventory(self, item):
+        self[item.idNum] = item
+		
 class Player:
     def __init__(self):
         self.viewables = ["Attributes", "Skills"]
         self.attributes = {}
         self.skills = {}
+        self.inventory = Inventory()
         self.zones = {}
+        self.quests = {}
 
     def addAttribute(self, attribute):
         self.attributes[attribute.name] = attribute
