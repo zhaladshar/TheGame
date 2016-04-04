@@ -18,7 +18,7 @@ class Milestone:
 		self.attributes.append((itemGenId, itemGenQty, itemGenTime, itemFailId))
 
 class Item:
-    def __init__(self, idNum, name, qty):
+    def __init__(self, idNum, name, qty=None):
         self.idNum = idNum
         self.name = name
         if qty == "" or qty == None:

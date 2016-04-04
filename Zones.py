@@ -15,7 +15,7 @@ class ActionDict(dict):
         return actionList
     
 class Action:
-    def __init__(self, description, mainActionFg, performanceCount):
+    def __init__(self, description, mainActionFg, performanceCount=0):
         self.description = description
         self.mainAction = mainActionFg
         self.performanceCount = performanceCount
@@ -85,14 +85,11 @@ class Result:
         self.executionScript.append(executionScript)
 
 class Zone:
-    def __init__(self, name, level, exp, unlocked):
+    def __init__(self, name, lvl=0, exp=0, unlocked=0):
         self.name = name
-        self.level = level
+        self.lvl = lvl
         self.exp = exp
-        if unlocked == 0:
-            self.unlocked = False
-        else:
-            self.unlocked = True
+        self.unlocked = bool(unlocked)
         self.actions = ActionDict()
         self.results = {}
         self.lastResult = None
@@ -126,4 +123,4 @@ class Zone:
         dbCursor.execute("""SELECT """)
 
     def generateCoinDrop(self):
-        return random.randint(self.level, 5 * self.level)
+        return random.randint(self.lvl, 5 * self.lvl)

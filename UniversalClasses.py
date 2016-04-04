@@ -1,22 +1,23 @@
 class Requirement:
-    def __init__(self, objectToCheck, logicalCheck, condition):
-        self.objectToCheck = objectToCheck
+    def __init__(self, objToCheck, subObjToCheck, logicalCheck, condition):
+        self.objToChk = objToCheck
+        self.subObjToChk = subObjToCheck
         self.logicalCheck = logicalCheck
         self.condition = condition
 
     def isRequirementMet(self):
         if self.logicalCheck == "=":
-            return self.objectToCheck == eval(self.condition)
+            return getattr(self.objToChk, self.subObjToChk) == eval(self.condition)
         elif self.logicalCheck == ">":
-            return self.objectToCheck > eval(self.condition)
+            return getattr(self.objToChk, self.subObjToChk) > eval(self.condition)
         elif self.logicalCheck == ">=":
-            return self.objectToCheck >= eval(self.condition)
+            return getattr(self.objToChk, self.subObjToChk) >= eval(self.condition)
         elif self.logicalCheck == "!=":
-            return self.objectToCheck != eval(self.condition)
+            return getattr(self.objToChk, self.subObjToChk) != eval(self.condition)
         elif self.logicalCheck == "<":
-            return self.objectToCheck < eval(self.condition)
+            return getattr(self.objToChk, self.subObjToChk) < eval(self.condition)
         elif self.logicalCheck == "<=":
-            return self.objectToCheck <= eval(self.condition)
+            return getattr(self.objToChk, self.subObjToChk) <= eval(self.condition)
         else:
             return "ERROR"
 
@@ -27,8 +28,11 @@ class Quest:
         self.requirementsToStart = []
         self.requirementsToEnd = []
 
-    def addRequirement(self, requirement):
-        self.requirements.append(requirement)
+    def addRequirement(self, startOrEnd, requirement):
+        if startOrEnd == "start":
+            self.requirementsToStart.append(requirement)
+        else:
+            self.requirementsToEnd.append(requirement)
 
     def requirementsMet(self, startOrEnd):
         met = True

@@ -1,11 +1,12 @@
 class Attribute:
-    def __init__(self, name, exp, value):
+    def __init__(self, idNum, name, exp=0, lvl=0):
+        self.idNum = idNum
         self.name = name
         self.exp = exp
-        self.value = value
+        self.lvl = lvl
 
     def __str__(self):
-        string = self.name + "\n" + "Level: " + str(self.value) + "\n" + "Exp: " + str(self.exp)
+        string = self.name + "\n" + "Level: " + str(self.lvl) + "\n" + "Exp: " + str(self.exp)
         return string
 
     def expToLevelUp(self):
@@ -18,7 +19,7 @@ class Attribute:
             self.levelUp()
             
     def levelUp(self):
-        self.value += 1
+        self.lvl += 1
         self.exp -= self.expToLevelUp()
 
 class Inventory(dict):

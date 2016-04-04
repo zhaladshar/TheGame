@@ -1,0 +1,195 @@
+Zone
+ - Forest:
+    - Animals: bear, raccoon, squirrel, skunk, mouse, deer, bobcat, mountain lion, wolf, badger, bat, snake, chameleon, ant, bee, cardinal, finch, echidna, gecko, fly, flea, fox, frog, eagle, crow, hawk, hedgehog, ladybug, newt, owl, possum, rabbit, spider, toad, wren
+    - Items: Seed, stick, stone, mushroom, coin, animal droppings, bone, leaf, feather, 
+ - Grassland
+    - Animals: buffalo, snake, bee, crane, coyote, rhinoceros, elephant, butterfly, ant, cricket, impala, kangaroo, hippopotamus, hedgehog, raven, rabbit, warthog, warbler, zebra, wallaby, toad, buzzard, beetle, aardvark
+ - Tundra
+ - Desert
+    - Animals: Armadillo, ant, bearded dragon, beetle, camel, snake, centipede, kangaroo, tortoise, spider, toad, meerkat, kestrel, falcon
+ - Jungle
+ - Mountain
+
+Actions to do in forest:
+    - Wander --> saw nothing exciting (80%-54.5%)
+             --> found a tree (10%-25%) 
+                    - climb --> found food/item (10%)
+                            --> gaze over the forest (90%)
+                    - chop [AXE]
+             --> found a clearing (0.5%)
+                    - make a town
+             --> found a stream (7%-15%)
+                    - take a drink
+                    - soak feet
+                    - look at yourself --> found a coin (20%)
+             --> found a shrine (2.5%-5%)
+                    - pray
+                    - burn incense
+    - Forage --> found nothing (80%)
+             --> found food/item (15%)
+             --> found tracks (1%)
+                    |--> follow
+                           |--> found nothing (80%)
+                           |--> found an animal (20%)
+                                  |--> trap [TRAP]
+
+Town
+ - House
+    - Kitchen: Experiment cooking to develop recipes and make food for adventures/sale
+    - Bedroom
+    - Study: Write books in all genres (literature, philosophy, poetry, etc.)
+    - Garage
+    - Basement
+    - Dining room
+    - Closet
+
+ - School
+    - Increase grades by being good at German. Each new grade unlocks more vocabulary and another game that will decrease wait times
+
+ - Factory
+    - R&D: Develop new designs to create objects
+    - Production area
+
+ - Museum
+    - Display rare items found during adventures
+    - Display art created by player
+
+ - Park
+    - Improves morale of city
+    - Can install: playgrounds, paths, trees, flowers, benches, fountains, fast food stands, performers
+    - Upgrading park increases park capacity but also allows for new types of items to be installed
+
+ - Hotel
+ - Restaurant
+    - Make recipes on demand for customers (recipes have been discovered on adventures/developed in kitchen)
+
+ - Pharmacy
+    - Sell herbs for health
+    - Make potions for better healing on adventure
+    - Custom create customer medicine requests
+
+ - Grocery store
+    - Store: Sell manufactured goods produced from farm
+    - Bakery: Sell manufactured goods produced from farm
+    - Butcher: Sell meat produced from farm
+
+ - Zoo
+    - Display animals that have been caught on adventures
+
+ - Church
+ - Temple
+ - Farm
+    - Grow crops from seeds that have been discovered/cultivated/harvested
+    - Tend to animals that have been found/trapped/bred
+
+ - Mine
+    - Mine/quarry for (precious) metals/(precious) stones
+    - Develop forge for blacksmithing once enough mine levels have been reached
+
+ - Shipyard
+    - Conduct expeditions to discover new lands
+    - Send supplies to already existing colonies
+    - Build new boats to carry supplies
+
+ - Library
+    - Equip with books that have been found on adventures/written in study
+
+ - Bank
+    - Store money for safe-keeping
+    - Invest in the stock market
+    - Make loans to customers
+
+ - Mill
+    - Make flours
+    - Make clothes
+
+ - Palace
+
+Quest flow
+ - Quest 1: Light incense at 5 shrines
+ - Quest 2: Offer 5 sticks and 1 stone at a shrine
+     - Get AXE
+ - Quest 3: Chop 25 trees
+ - Quest 4: Create a town
+
+Action tree (Forest)
+ (A) Wander
+     (R) Found a tree
+          (A) Climb
+               (R) See something far away
+                  * (A) Investigate
+                    EXNSCR: PBLSH_MSG
+
+               (R) Found food/item
+                    EXNSCR: ITEM_DROP
+
+               (R) Found animal
+                    EXNSCR: GEN_ANIMAL
+
+               (R) Nothing
+                    EXNSCR: PBLSH_MSG
+
+          (A) Chop
+               (R) Found food/item
+                    EXNSCR: ITEM_DROP
+
+          EXNSCR: PBLSH_MSG
+
+     (R) Found a clearing
+          (A) Make town
+          EXNSCR: PBLSH_MSG
+
+     (R) Found a stream
+          (A) Drink
+               (R) Found coin
+                    EXNSCR: MONEY_DROP
+
+               (R) Water refreshing
+                    EXNSCR: PBLSH_MSG
+
+          (A) Look
+               (R) See nothing
+                    EXNSCR: PBLS_MSG
+
+               (R) Found food/item
+                    EXNSCR: ITEM_DROP
+
+               (R) Found animal
+                    EXNSCR: GEN_ANIMAL
+
+          EXNSCR: PBLSH_MSG
+
+     (R) Found a shrine
+          (A) Pray
+               (R) No one hears you
+                    EXNSCR: PBLSH_MSG
+
+               (R) You feel blessed
+                    EXNSCR: STAT_UP
+
+          (A) Light incense
+        * (A) Offer
+          EXNSCR: PBLSH_MSG
+
+     (R) Found nothing
+          EXNSCR: PBLSH_MSG
+
+ (A) Forage
+     (R) Found nothing
+          EXNSCR: PBLSH_MSG
+
+     (R) Found food/item
+          EXNSCR: ITEM_DROP
+
+     (R) Found tracks
+          EXNSCR: GEN_ANIMAL
+
+   * (R) Found seed
+
+German games
+ - Match word with definition
+ - Write verb given person/number/tense/etc.
+ - Write ein-/der-words in correct case and number
+ - Identify gender of nouns
+ - Type word based off audio
+ - Identify what case object of preposition takes
