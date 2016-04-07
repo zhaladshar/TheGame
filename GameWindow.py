@@ -116,7 +116,7 @@ class ZoneActionsBox(QWidget):
         self.action.emit(textOfAction)
 
 class ZoneWidget(QWidget):
-    publishMessage = pyqtSignal(str)
+    publishMessage = pyqtSignal(str, object)
     
     def __init__(self, zone, parent):
         super().__init__()
@@ -143,7 +143,7 @@ class ZoneWidget(QWidget):
     def executeAction(self, textOfAction):
         # Acquire result of action
         self.zone.act(textOfAction)
-
+        
         # Parse the execution script of the result
         for script in self.zone.lastResult.executionScript:
             self.parseExecutionScript(script, textOfAction)
@@ -157,13 +157,13 @@ class ZoneWidget(QWidget):
                                                    self.parent.dbCursor)
             msgTuple = (itemTuple[0], itemTuple[1][1])
         elif script == "PBLSH_MSG":
-            if self.zone.lastResult.description == "Found a tree":
+            if self.zone.lastResult.description == "FoundTree":
                 msgTuple = ("a", "tree")
-            elif self.zone.lastResult.description == "Found a stream":
+            elif self.zone.lastResult.description == "FoundStream":
                 msgTuple = ("a", "stream")
-            elif self.zone.lastResult.description == "Found a clearing":
+            elif self.zone.lastResult.description == "FoundClearing":
                 msgTuple = ("a", "clearing")
-            elif self.zone.lastResult.description == "Found a shrine":
+            elif self.zone.lastResult.description == "FoundShrine":
                 msgTuple = ("a", "shrine")
         elif script == "MONEY_DROP":
             moneyAmt = self.zone.generateCoinDrop()
@@ -172,14 +172,7 @@ class ZoneWidget(QWidget):
             pass
         elif script == "STAT_UP":
             pass
-        self.emitPublishMessage(self.zone.lastResult.message, msgTuple)
-        
-    def emitPublishMessage(self, text, params=None):
-        # Fill '_' with text, if there is any
-        if params:
-            for param in params:
-                text = text.replace("_", str(param), 1)
-        self.publishMessage.emit(text)
+        self.publishMessage.emit(self.zone.lastResult.message, msgTuple)
 
 class PlayerSelector(QDialog):
     playerName = pyqtSignal(str)
@@ -303,10 +296,22 @@ class Window(QMainWindow):
     def getName(self, text):
         self.personName = text
 
-    def publishMessage(self, text):
+    def publishMessage(self, msgCode, params):
+        # Grab message from database
+        self.dbGameCursor.execute("SELECT * FROM Messages WHERE idNum=?",
+                                  (msgCode,))
+        msgTuple = self.dbGameCursor.fetchone()
+        text = msgTuple[1]
+        
+        # Fill '_' with text, if there is any
+        if params:
+            for param in params:
+                text = text.replace("_", str(param), 1)
+
+        # Push to textbox
         self.messageBox.moveCursor(QTextCursor.Start)
         self.messageBox.insertPlainText(str(text) + "\n")
-
+        
     def importGameData(self):
         # Import item data
         self.dbGameCursor.execute("""SELECT ItemId, Name FROM Items""")
@@ -357,30 +362,30 @@ class Window(QMainWindow):
             action = Zones.Action(each[1], each[2])
             self.person.zones[each[0]].addAction(action)
 
-        self.dbGameCursor.execute("""SELECT ZonesResults.Zone, ZonesResults.ResultName,
-                                        ZonesResults.Likelihood, ZonesResults.MaxLikelihood,
-                                        Messages.Text
-                                 FROM ZonesResults
-                                 LEFT OUTER JOIN Messages
-                                 ON ZonesResults.Message = Messages.idNum""")
-        for each in self.dbGameCursor:
-            result = Zones.Result(each[1], each[2], each[3], each[4])
-            self.person.zones[each[0]].addResult(result)
+        self.dbGameCursor.execute("""SELECT * FROM ZonesResults""")
+        for zone, action, result, prob, maxProb, msg in self.dbGameCursor:
+            resultObj = Zones.Result(result, prob, maxProb, msg)
+
+            if action not in self.person.zones[zone].results.keys():
+                self.person.zones[zone].results[action] = {}
+
+            self.person.zones[zone].results[action][result] = resultObj
 
         self.dbGameCursor.execute("SELECT * FROM ZonesResultsExecutionScripts")
-        for each in self.dbGameCursor:
-            self.person.zones[each[0]].results[each[1]].addExecutionScript(each[2])
+        for zone, action, result, exn in self.dbGameCursor:
+            self.person.zones[zone].results[action][result].addExecutionScript(exn)
 
         self.dbGameCursor.execute("SELECT * FROM ZonesActionsXResults")
-        for each in self.dbGameCursor:
-            if each[1] == "Action":
-                actionToPair = self.person.zones[each[0]].actions[each[2]]
-                resultToBePaired = self.person.zones[each[0]].results[each[4]]
+        for zone, objLnkdType, objLnkdName, objLnkType, objLnkName in self.dbGameCursor:
+            if objLnkdType == "Action":
+                actionToPair = self.person.zones[zone].actions[objLnkdName]
+                resultToBePaired = self.person.zones[zone].results[objLnkdName][objLnkName]
 
                 actionToPair.addResult(resultToBePaired)
-            elif each[1] == "Result":
-                resultToPair = self.person.zones[each[0]].results[each[2]]
-                actionToBePaired = self.person.zones[each[0]].actions[each[4]]
+            else:
+                actionName = objLnkdType.split(".")[0]
+                resultToPair = self.person.zones[zone].results[actionName][objLnkdName]
+                actionToBePaired = self.person.zones[zone].actions[objLnkName]
 
                 resultToPair.addAction(actionToBePaired)
 
