@@ -25,13 +25,17 @@ class Item:
             self.qty = 0
         else:
             self.qty = qty
+        self.categories = []
         self.inherents = []
         self.components = {}
         self.milestones = {}
 
+    def addCategory(self, category):
+        self.categories.append(category)
+        
     def addInherent(self, inherent):
         self.inherents.append(inherent)
-
+    
     def addMilestone(self, inherent, milestone):
         if inherent not in self.milestones.keys():
             self.milestones[inherent] = []

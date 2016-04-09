@@ -1,6 +1,32 @@
 # Initialization constants
 INI_FILE = "thegame.ini"
 
+
+    ######################
+    # Interface constants
+    ######################
+
+# Constants to change the views of the selector widget
+INTFC_SLCTR_PLYR = "Pl"
+INTFC_SLCTR_INV = "Inv"
+
+INTFC_SLCTR_PLYR_POS = 0
+INTFC_SLCTR_INV_POS = 1
+
+INTFC_SLCTR = {INTFC_SLCTR_PLYR: INTFC_SLCTR_PLYR_POS,
+               INTFC_SLCTR_INV: INTFC_SLCTR_INV_POS}
+
+# Constants to change views of the player display
+# (sub-widget to selector widget)
+INTFC_PLYR_DISP_ATTR = "Attributes"
+INTFC_PLYR_DISP_SKLL = "Skills"
+
+INTFC_PLYR_DISP_ATTR_POS = 0
+INTFC_PLYR_DISP_SKLL_POS = 1
+
+INTFC_PLYR_DISP = {INTFC_PLYR_DISP_ATTR: INTFC_PLYR_DISP_ATTR_POS,
+                   INTFC_PLYR_DISP_SKLL: INTFC_PLYR_DISP_SKLL_POS}
+
 # List of player attributes
 STRENGTH_ATTR = "Strength"
 DEXTERITY_ATTR = "Dexterity"
@@ -24,3 +50,7 @@ PLAYER_ATTRIBUTES = [STRENGTH_ATTR, DEXTERITY_ATTR, STAMINA_ATTR,
 FOREST_ZONE = "Forest"
 
 ZONES = [FOREST_ZONE]
+
+# List of item categories
+ITM_CAT_ANIMAL = "ANIMAL"
+

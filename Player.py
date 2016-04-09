@@ -31,12 +31,12 @@ class Inventory(dict):
 		
 class Player:
     def __init__(self):
-        self.viewables = ["Attributes", "Skills"]
         self.attributes = {}
         self.skills = {}
         self.inventory = Inventory()
         self.zones = {}
         self.quests = {}
+        self.artifacts = {}
 
     def addAttribute(self, attribute):
         self.attributes[attribute.name] = attribute
@@ -46,3 +46,6 @@ class Player:
 
     def addZone(self, zone):
         self.zones[zone.name] = zone
+
+    def addArtifact(self, artifact):
+        self.artifacts[artifact.name] = artifact

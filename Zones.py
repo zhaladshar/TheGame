@@ -93,6 +93,7 @@ class Zone:
         self.actions = ActionDict()
         self.results = {}
         self.lastResult = None
+        self.appearance = None
         
     def addAction(self, action):
         self.actions[action.description] = action
@@ -101,26 +102,42 @@ class Zone:
         self.results[result.description] = result
 
     def act(self, actionToExecuteText):
+        self.appearance = None
         self.actions[actionToExecuteText].incrementCount()
         self.lastResult = self.actions[actionToExecuteText].getResult()
 
-    def generateItemDrop(self, actionExecutedText, dbCursor):
-        dbCursor.execute("""SELECT ZonesItemDrop.ItemIdNum, Items.Name
+    def generateItemDrop(self, actionExecutedText, dbGameCursor):
+        dbGameCursor.execute("""SELECT ZonesItemDrop.ItemIdNum, Items.Name
                             FROM ZonesItemDrop
                             JOIN Items ON ZonesItemDrop.ItemIdNum = Items.ItemId
                             WHERE Zone=? AND Action=?""",
                          (self.name, actionExecutedText))
+        
         dropList = []
-        for item in dbCursor:
+        for item in dbGameCursor:
             dropList.append((item[0], item[1]))
-
+        
         randomNum = random.randint(0, len(dropList) - 1)
         randomQty = random.randint(1, 4)
-
+        
         return (randomQty, dropList[randomNum])
 
-    def generateAnimal(self, actionExecutedText, dbCursor):
-        dbCursor.execute("""SELECT """)
+    def generateAnimal(self, actionExecutedText, dbGameCursor):
+        dbGameCursor.execute("""SELECT ZonesItemDrop.ItemIdNum, Items.Name
+                            FROM ZonesItemDrop
+                            LEFT OUTER JOIN ItemsCategories
+                            ON ZonesItemDrop.ItemIdNum = ItemsCategories.ItemId
+                            LEFT OUTER JOIN Items
+                            ON ZonesItemDrop.ItemIdNum = Items.ItemId
+                            WHERE ZonesItemDrop.Zone=?  AND ZonesItemDrop.Action=? AND ItemsCategories.Category=?""",
+                         (self.name, actionExecutedText, constants.ITM_CAT_ANIMAL))
+        dropList = []
+        for animal in dbGameCursor:
+            dropList.append(animal)
+        
+        randomNum = random.randint(0, len(dropList) - 1)
 
+        return dropList[randomNum]
+    
     def generateCoinDrop(self):
         return random.randint(self.lvl, 5 * self.lvl)

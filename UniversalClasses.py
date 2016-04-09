@@ -45,3 +45,11 @@ class Quest:
             if req.isRequirementMet() == False:
                 met = False
         return met
+
+class Artifact:
+    def __init__(self, name, has=0):
+        self.name = name
+        self.owned = bool(has)
+
+    def has(self, hasInt):
+        self.owned = bool(hasInt)
