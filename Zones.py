@@ -114,8 +114,8 @@ class Zone:
                          (self.name, actionExecutedText))
         
         dropList = []
-        for item in dbGameCursor:
-            dropList.append((item[0], item[1]))
+        for itemId, itemName in dbGameCursor:
+            dropList.append((itemId, itemName))
         
         randomNum = random.randint(0, len(dropList) - 1)
         randomQty = random.randint(1, 4)
@@ -132,8 +132,8 @@ class Zone:
                             WHERE ZonesItemDrop.Zone=?  AND ZonesItemDrop.Action=? AND ItemsCategories.Category=?""",
                          (self.name, actionExecutedText, constants.ITM_CAT_ANIMAL))
         dropList = []
-        for animal in dbGameCursor:
-            dropList.append(animal)
+        for animalId, animalName in dbGameCursor:
+            dropList.append((animalId, animalName))
         
         randomNum = random.randint(0, len(dropList) - 1)
 

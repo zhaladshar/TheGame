@@ -46,7 +46,7 @@ class PlayerDisplayWidget(QWidget):
             self.layout.addWidget(label)
         self.layout.addStretch(1)
             
-class PersonDetailWidget(QWidget):
+class PersonDetailInterface(QWidget):
     def __init__(self, person):
         super().__init__()
         self.person = person
@@ -78,6 +78,18 @@ class InventoryWidgetItem(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         self.setLayout(layout)
+
+        if self.item.qty == 0.0:
+            self.hide()
+        else:
+            self.show()
+
+    def refresh(self):
+        self.itemQty.setText(str(self.item.qty))
+        if self.item.qty == 0.0:
+            self.hide()
+        else:
+            self.show()
         
 class InventoryWidget(QWidget):
     def __init__(self, inventory):
@@ -85,9 +97,10 @@ class InventoryWidget(QWidget):
         self.inventory = inventory
 
         self.layout = QVBoxLayout()
-        
-        for itemId in inventory:
-            inventoryItem = InventoryWidgetItem(inventory[itemId])
+
+        sortedInv = sorted(self.inventory.values(), key=lambda x: x.name)
+        for item in sortedInv:
+            inventoryItem = InventoryWidgetItem(item)
             self.layout.addWidget(inventoryItem)
 
         self.layout.addStretch(1)
@@ -96,7 +109,91 @@ class InventoryWidget(QWidget):
         
         self.setLayout(self.layout)
 
-class SwitcherSelectorWidget(QWidget):
+    def refresh(self):
+        for idx in range(self.layout.count()):
+            layoutItem = self.layout.itemAt(idx).widget()
+            if layoutItem != None:
+                # LayoutItem == None if we are capturing a stretch element
+                layoutItem.refresh()
+
+class ArtifactWidgetItem(QLabel):
+    def __init__(self, artifact):
+        super().__init__()
+        self.artifact = artifact
+
+        self.setText(artifact.name)
+
+        if self.artifact.owned == True:
+            self.setStyleSheet("QLabel { color: black }")
+        else:
+            self.setStyleSheet("QLabel { color: gray }")
+            
+class ArtifactWidget(QWidget):
+    def __init__(self, artifacts):
+        super().__init__()
+        self.artifacts = artifacts
+
+        self.layout = QVBoxLayout()
+
+        for artifactName in artifacts:
+            artifactItem = ArtifactWidgetItem(artifacts[artifactName])
+            self.layout.addWidget(artifactItem)
+
+        self.layout.addStretch(1)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
+        self.setLayout(self.layout)
+        
+class InventoryInterface(QWidget):
+    def __init__(self, inventory, artifacts):
+        super().__init__()
+        
+        self.tabs = QStackedWidget()
+        self.inventoryTab = InventoryWidget(inventory)
+        self.artifactsTab = ArtifactWidget(artifacts)
+
+        self.tabs.addWidget(self.inventoryTab)
+        self.tabs.addWidget(self.artifactsTab)
+        
+        self.selectorBox = QComboBox()
+        self.selectorBox.currentIndexChanged.connect(self.changeTab)
+        for intfc in constants.INTFC_INV_LIST:
+            self.selectorBox.addItem(intfc)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.selectorBox)
+        self.layout.addWidget(self.tabs)
+
+        self.setLayout(self.layout)
+
+    def changeTab(self, currIdx):
+        self.tabs.setCurrentIndex(currIdx)
+
+    def refreshInventory(self):
+        self.inventoryTab.refresh()
+
+class QuestWidget(QWidget):
+    def __init__(self, quests):
+        super().__init__()
+        self.quests = quests
+
+        self.layout = QVBoxLayout()
+
+        self.setLayout(self.layout)
+        
+class QuestInterface(QWidget):
+    def __init__(self, quests):
+        super().__init__()
+
+        self.questWidget = QuestWidget(quests)
+
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.questWidget)
+
+        self.setLayout(self.layout)
+        
+class SideBarSelectorChoices(QWidget):
     choiceChanged = pyqtSignal(int)
     
     def __init__(self):
@@ -106,7 +203,7 @@ class SwitcherSelectorWidget(QWidget):
         self.layout.addStretch(1)
 
         # Build interface from constants.INTFC_SLCTR
-        for intfc in constants.INTFC_SLCTR:
+        for intfc in constants.INTFC_SLCTR_LIST:
             label = EmitLabel(intfc)
             label.clicked.connect(self.emitChoice)
             self.layout.addWidget(label)
@@ -120,18 +217,20 @@ class SwitcherSelectorWidget(QWidget):
     def emitChoice(self, text):
         self.choiceChanged.emit(constants.INTFC_SLCTR[text])
         
-class SwitcherWidget(QWidget):
+class SideBarWidget(QWidget):
     def __init__(self, person):
         super().__init__()
         self.switcher = QStackedWidget()
-        self.personalDetailWidget = PersonDetailWidget(person)
-        self.inventoryWidget = InventoryWidget(person.inventory)
-
-        self.selectorWidget = SwitcherSelectorWidget()
+        self.personalDetailWidget = PersonDetailInterface(person)
+        self.inventoryWidget = InventoryInterface(person.inventory, person.artifacts)
+        self.questWidget = QuestInterface(person.quests)
+        
+        self.selectorWidget = SideBarSelectorChoices()
         self.selectorWidget.choiceChanged.connect(self.changeSelection)
 
         self.switcher.addWidget(self.personalDetailWidget)
         self.switcher.addWidget(self.inventoryWidget)
+        self.switcher.addWidget(self.questWidget)
         
         self.layout = QVBoxLayout()
         self.layout.addWidget(self.switcher)
@@ -140,6 +239,9 @@ class SwitcherWidget(QWidget):
 
     def changeSelection(self, newSelection):
         self.switcher.setCurrentIndex(newSelection)
+
+    def refreshInventory(self):
+        self.inventoryWidget.refreshInventory()
 
 class MessageTextBox(QTextEdit):
     def __init__(self):
@@ -195,6 +297,7 @@ class ZoneActionsBox(QWidget):
 
 class ZoneWidget(QWidget):
     publishMessage = pyqtSignal(str, object)
+    addItemQtyToInv = pyqtSignal(int, float)
     
     def __init__(self, zone, parent):
         super().__init__()
@@ -233,6 +336,7 @@ class ZoneWidget(QWidget):
         if script == "ITEM_DROP":
             itemTuple = self.zone.generateItemDrop(textOfAction,
                                                    self.parent.dbGameCursor)
+            self.addItemQtyToInv.emit(itemTuple[1][0], itemTuple[0])
             msgTuple = (itemTuple[0], itemTuple[1][1])
         elif script == "PBLSH_MSG":
             if self.zone.lastResult.description == "FoundTree":
@@ -251,6 +355,7 @@ class ZoneWidget(QWidget):
         elif script == "GEN_ANIMAL":
             animal = self.zone.generateAnimal(textOfAction, self.parent.dbGameCursor)
             self.zone.appearance = animal
+            self.addItemQtyToInv.emit(animal[0], 1)
             msgTuple = (1, animal[1])
         elif script == "STAT_UP":
             pass
@@ -370,15 +475,16 @@ class Window(QMainWindow):
 
         # Switcher widget will hold all the various views, like player
         # information, inventory, zones, etc.
-        self.switcherWidget = SwitcherWidget(self.person)
-        self.switcherWidget.setFixedWidth(200)
+        self.sideBarWidget = SideBarWidget(self.person)
+        self.sideBarWidget.setFixedWidth(200)
         mainAreaWidget = ZoneWidget(self.person.zones["Forest"], self)
         mainAreaWidget.publishMessage.connect(self.publishMessage)
+        mainAreaWidget.addItemQtyToInv.connect(self.addItemToInventory)
         germanAreaLabel = QLabel("German")
         zoneStatsLabel = QLabel("Zone stats")
         self.messageBox = MessageTextBox()
 
-        self.mainLayout.addWidget(self.switcherWidget)
+        self.mainLayout.addWidget(self.sideBarWidget)
         self.rightTopLayout.addWidget(self.messageBox)
         self.rightTopLayout.addWidget(mainAreaWidget)
         self.rightLayout.addLayout(self.rightTopLayout)
@@ -388,6 +494,8 @@ class Window(QMainWindow):
         self.mainWidget.setLayout(self.mainLayout)
         self.setCentralWidget(self.mainWidget)
 
+        self.setWindowTitle("TheGame")
+
     def deletePlayer(self, text):
         os.remove(text + ".db")
         idxToDelete = self.ini["PLAYERS"].index(text)
@@ -396,7 +504,11 @@ class Window(QMainWindow):
     def getName(self, text):
         self.personName = text
 
-    def publishMessage(self, msgCode, params):
+    def addItemToInventory(self, itemId, itemQty):
+        self.person.addItemToInventory(itemId, itemQty)
+        self.sideBarWidget.refreshInventory()
+
+    def publishMessage(self, msgCode, params, color="black"):
         # Grab message from database
         self.dbGameCursor.execute("SELECT * FROM Messages WHERE idNum=?",
                                   (msgCode,))
@@ -410,7 +522,9 @@ class Window(QMainWindow):
 
         # Push to textbox
         self.messageBox.moveCursor(QTextCursor.Start)
-        self.messageBox.insertPlainText(str(text) + "\n")
+        self.messageBox.setTextColor(QColor(color))
+        cursor = self.messageBox.textCursor()
+        cursor.insertText(str(text) + "\n")
 
     def importGameData(self):
         # Import item data
@@ -494,6 +608,12 @@ class Window(QMainWindow):
         for each in self.dbGameCursor:
             artifact = UniversalClasses.Artifact(each[0])
             self.person.addArtifact(artifact)
+
+        # Import story quest data
+        self.dbGameCursor.execute("SELECT * FROM Quests")
+        for questId, questDesc in self.dbGameCursor:
+            quest = UniversalClasses.Quest(questId, questDesc, True)
+            self.person.addQuest(quest)
             
         # Import requirements
         self.dbGameCursor.execute("SELECT * FROM Requirements")
@@ -525,6 +645,14 @@ class Window(QMainWindow):
         for artifact, has in self.dbPlayerCursor:
             self.person.artifacts[artifact].has(has)
 
+        self.dbPlayerCursor.execute("SELECT * FROM Quests")
+        for questId, desc, status, storyQuest in self.dbPlayerCursor:
+            if storyQuest == True:
+                self.person.quests[questId].status = status
+            else:
+                quest = UniversalClasses.Quest(questId, desc, bool(storyQuest), status)
+                self.person.addQuest(quest)
+
     def exportPlayerData(self):
         self.dbPlayerCursor.execute("DELETE FROM Inventory")
         for itemId, item in self.person.inventory.items():
@@ -555,6 +683,20 @@ class Window(QMainWindow):
                                            SET Has=?
                                            WHERE Name=?""",
                                         (int(artifact.owned), artifactName))
+
+        for questId, quest in self.person.quests.items():
+            self.dbPlayerCursor.execute("SELECT * FROM Quests WHERE idNum=?",
+                                        (questId,))
+            if self.dbPlayerCursor:
+                self.dbPlayerCursor.execute("""UPDATE Quests
+                                               SET Status=?
+                                               WHERE idNum=?""",
+                                            (quest.status, questId))
+            else:
+                self.dbPlayerCursor.execute("""INSERT INTO Quests
+                                               VALUES (?, ?, ?, ?)""",
+                                            (questId, quest.description, quest.status, int(quest.storyQuest)))
+                
         self.dbPlayerConnection.commit()
         
     def buildPlayerDB(self):
@@ -587,6 +729,13 @@ class Window(QMainWindow):
                                       (Name TEXT,
                                        Has  INTEGER
                                       )""")
+
+        self.dbPlayerCursor.execute("""CREATE TABLE Quests
+                                      (idNum       TEXT,
+                                       Description TEXT,
+                                       Status      TEXT,
+                                       StoryQuest  INTEGER
+                                      )""")
         
         # Enter initial data into rows in tables
         self.dbGameCursor.execute("SELECT Name FROM PlayerAttributes")
@@ -610,6 +759,11 @@ class Window(QMainWindow):
         for nameTpl in self.dbGameCursor:
             self.dbPlayerCursor.execute("""INSERT INTO Artifacts VALUES
                                            (?, 0)""", (nameTpl[0],))
+
+        self.dbGameCursor.execute("SELECT QuestId FROM Quests")
+        for entryTpl in self.dbGameCursor:
+            self.dbPlayerCursor.execute("""INSERT INTO Quests VALUES
+                                           (?, "", ?, ?)""", (entryTpl[0], constants.QST_NOT_START, int(True)))
             
         self.dbPlayerConnection.commit()
 

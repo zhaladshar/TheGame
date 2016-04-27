@@ -28,7 +28,10 @@ class Inventory(dict):
 
     def addItemToInventory(self, item):
         self[item.idNum] = item
-		
+
+    def invUp(self, itemId, qty):
+        self[itemId].qty += qty
+
 class Player:
     def __init__(self):
         self.attributes = {}
@@ -47,5 +50,11 @@ class Player:
     def addZone(self, zone):
         self.zones[zone.name] = zone
 
+    def addQuest(self, quest):
+        self.quests[quest.idNum] = quest
+
     def addArtifact(self, artifact):
         self.artifacts[artifact.name] = artifact
+
+    def addItemToInventory(self, itemId, qty):
+        self.inventory.invUp(itemId, qty)
